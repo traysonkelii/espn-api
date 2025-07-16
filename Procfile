@@ -1,0 +1,1 @@
+web: gunicorn -k uvicorn.workers.UvicornWorker espn_api.api_server:app 
