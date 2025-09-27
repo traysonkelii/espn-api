@@ -163,6 +163,16 @@ def get_player_info_by_name(league_id: int, year: int, player_name: str, api_key
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
 
+@app.get("/league/{league_id}/{year}/all/{week}")
+def get_scoreboard(league_id: int, year: int, week: int, api_key: str = Depends(get_api_key), cookies: tuple = Depends(get_espn_cookies)):
+    espn_s2, swid = cookies
+    try:
+        league = League(league_id, year, espn_s2=espn_s2, swid=swid)
+        matchups = league.scoreboard(week=week)
+        return [matchup_to_dict(m) for m in matchups]
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
 @app.get("/league/{league_id}/{year}/scoreboard/{week}")
 def get_scoreboard(league_id: int, year: int, week: int, api_key: str = Depends(get_api_key), cookies: tuple = Depends(get_espn_cookies)):
     espn_s2, swid = cookies
