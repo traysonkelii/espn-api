@@ -169,7 +169,27 @@ def get_scoreboard(league_id: int, year: int, week: int, api_key: str = Depends(
     try:
         league = League(league_id, year, espn_s2=espn_s2, swid=swid)
         matchups = league.scoreboard(week=week)
-        return [matchup_to_dict(m) for m in matchups]
+        trimmed_matchups = []
+        for matchup in matchups:
+            matchup_dict = matchup_to_dict(matchup)
+            for side in ("home_team", "away_team"):
+                team = matchup_dict.get(side)
+                if not isinstance(team, dict):
+                    continue
+                team.pop("roster", None)
+                owners = team.get("owners")
+                if isinstance(owners, list):
+                    trimmed_owners = []
+                    for owner in owners:
+                        if isinstance(owner, dict):
+                            trimmed_owners.append({k: v for k, v in owner.items() if k != "notificationSettings"})
+                        elif hasattr(owner, "__dict__"):
+                            trimmed_owners.append({k: v for k, v in vars(owner).items() if k != "notificationSettings"})
+                        else:
+                            trimmed_owners.append(owner)
+                    team["owners"] = trimmed_owners
+            trimmed_matchups.append(matchup_dict)
+        return trimmed_matchups
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
 
